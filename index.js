@@ -2,16 +2,21 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const app = express();
-const PORT = 5000;
+require("dotenv").config();
 
 app.use(cors());
+
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect("mongodb://localhost:27017/budget-tracker", {
+// MongoDB Connec
+const PORT = process.env.PORT || 5000;
+
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+  useUnifiedTopology : true,
+    });
+
+
 
 const transactionSchema = new mongoose.Schema({
   title: { type: String, required: true },
