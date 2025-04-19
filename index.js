@@ -39,6 +39,10 @@ app.get("/api/transactions", async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("✅ Budget Tracker Backend is Live on Vercel!");
+});
+
 app.post("/api/transactions", async (req, res) => {
   try {
     const { title, amount, category, type } = req.body;
