@@ -8,7 +8,6 @@ app.use(
   cors({
     origin: "https://budget-tracker-frontend-eight.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
   })
 );
 
