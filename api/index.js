@@ -82,7 +82,6 @@
 // app.listen(PORT, () => {
 //   console.log(`Server running on 5000 port`);
 // });
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -90,22 +89,27 @@ const serverless = require("serverless-http");
 require("dotenv").config();
 
 const app = express();
-
 app.use(
   cors({
     origin: "https://budget-tracker-frontend-eight.vercel.app",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "DELETE"],
   })
 );
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+let isConnected = false;
+async function connectToMongo() {
+  if (isConnected) return;
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    isConnected = true;
+    console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+  }
+}
 
-// Define Schema
+// Schema & Model
 const transactionSchema = new mongoose.Schema({
   title: { type: String, required: true },
   amount: { type: Number, required: true, min: 0 },
@@ -113,10 +117,15 @@ const transactionSchema = new mongoose.Schema({
   type: { type: String, enum: ["income", "expense"], required: true },
   date: { type: Date, default: Date.now },
 });
-const Transaction = mongoose.model("Transaction", transactionSchema);
+const Transaction = mongoose.models.Transaction || mongoose.model("Transaction", transactionSchema);
 
 // Routes
+app.get("/api", async (req, res) => {
+  res.send("✅ Budget Tracker Backend is Live on Vercel!");
+});
+
 app.get("/api/transactions", async (req, res) => {
+  await connectToMongo();
   try {
     const transactions = await Transaction.find();
     res.json(transactions);
@@ -125,11 +134,8 @@ app.get("/api/transactions", async (req, res) => {
   }
 });
 
-app.get("/api", (req, res) => {
-  res.send("✅ Budget Tracker Backend is Live on Vercel!");
-});
-
 app.post("/api/transactions", async (req, res) => {
+  await connectToMongo();
   try {
     const { title, amount, category, type } = req.body;
     const transaction = new Transaction({ title, amount, category, type });
@@ -141,19 +147,15 @@ app.post("/api/transactions", async (req, res) => {
 });
 
 app.delete("/api/transactions/:id", async (req, res) => {
+  await connectToMongo();
   try {
     const { id } = req.params;
     const result = await Transaction.findByIdAndDelete(id);
-    if (!result) {
-      return res.status(404).json({ error: "Transaction not found" });
-    }
+    if (!result) return res.status(404).json({ error: "Transaction not found" });
     res.status(204).send();
   } catch (err) {
-    if (err.name === "CastError" && err.kind === "ObjectId") {
-      return res.status(400).json({ error: "Invalid Transaction ID" });
-    }
     res.status(500).json({ error: "Failed to delete transaction" });
   }
 });
 
-module.exports = serverless(app); // 🚀 This is key for Vercel!
+module.exports = serverless(app);
