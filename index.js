@@ -11,10 +11,7 @@ app.use(express.json());
 // MongoDB Connec
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(process.env.MONGODB_URI);
 
 const transactionSchema = new mongoose.Schema({
   title: { type: String, required: true },
